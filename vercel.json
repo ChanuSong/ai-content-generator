@@ -7,6 +7,7 @@
     "app/api/kling-video/route.ts": { "maxDuration": 60 },
     "app/api/kling-status/route.ts": { "maxDuration": 30 },
     "app/api/motion-control/route.ts": { "maxDuration": 60 },
-    "app/api/motion-status/route.ts": { "maxDuration": 30 }
+    "app/api/motion-status/route.ts": { "maxDuration": 30 },
+    "app/api/idea-chat/route.ts": { "maxDuration": 60 }
   }
 }
