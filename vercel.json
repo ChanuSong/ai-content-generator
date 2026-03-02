@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "app/api/generate-image/route.ts": { "maxDuration": 60 },
+    "app/api/generate-video/route.ts": { "maxDuration": 60 },
+    "app/api/check-video/route.ts": { "maxDuration": 30 },
+    "app/api/generate-tts/route.ts": { "maxDuration": 60 },
+    "app/api/kling-video/route.ts": { "maxDuration": 60 },
+    "app/api/kling-status/route.ts": { "maxDuration": 30 },
+    "app/api/motion-control/route.ts": { "maxDuration": 60 },
+    "app/api/motion-status/route.ts": { "maxDuration": 30 }
+  }
+}
