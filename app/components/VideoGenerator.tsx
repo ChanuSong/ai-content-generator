@@ -45,8 +45,7 @@ export default function VideoGenerator() {
     setDragging(false);
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pollOperation = useCallback(async (operation: any): Promise<string> => {
+  const pollOperation = useCallback(async (operationName: string): Promise<string> => {
     const maxAttempts = 120;
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise((r) => setTimeout(r, 5000));
@@ -54,7 +53,7 @@ export default function VideoGenerator() {
       const res = await fetch("/api/check-video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ operation }),
+        body: JSON.stringify({ operationName }),
       });
       const data = await res.json();
 
@@ -86,13 +85,13 @@ export default function VideoGenerator() {
       return;
     }
 
-    if (!data.operation?.name) {
-      setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: "작업 객체를 받지 못했습니다." } : v));
+    if (!data.operationName) {
+      setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: "작업 이름을 받지 못했습니다." } : v));
       return;
     }
 
     try {
-      const videoUrl = await pollOperation(data.operation);
+      const videoUrl = await pollOperation(data.operationName);
       setVideos((prev) => prev.map((v, i) => i === index ? { url: videoUrl, status: "done" } : v));
     } catch (err) {
       setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: err instanceof Error ? err.message : String(err) } : v));

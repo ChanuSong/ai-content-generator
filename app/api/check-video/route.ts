@@ -1,14 +1,14 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
-    const { operation: operationObj } = await req.json();
+    const body = await req.json();
+    const operationName = body.operationName || body.operation?.name;
 
-    if (!operationObj?.name) {
-      return NextResponse.json({ error: "Operation 객체가 필요합니다." }, { status: 400 });
+    if (!operationName) {
+      return NextResponse.json({ error: "operationName이 필요합니다." }, { status: 400 });
     }
 
     const apiKey = process.env.GOOGLE_API_KEY;
@@ -16,10 +16,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "GOOGLE_API_KEY가 설정되지 않았습니다." }, { status: 500 });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    // Direct REST call to Google API (bypasses SDK class instantiation issues)
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`
+    );
+    const operation = await res.json();
 
-    // Pass the full operation object (not just the name string)
-    const operation = await ai.operations.getVideosOperation({ operation: operationObj });
+    if (operation.error) {
+      return NextResponse.json({
+        done: true,
+        error: operation.error.message || "API 오류",
+      });
+    }
 
     if (!operation.done) {
       return NextResponse.json({
@@ -30,10 +38,10 @@ export async function POST(req: NextRequest) {
 
     // Operation complete - extract video
     const videos = operation.response?.generatedVideos;
-    if (videos && videos.length > 0) {
-      const video = videos[0].video;
-      if (video?.uri) {
-        const videoResponse = await fetch(video.uri);
+    if (videos?.length > 0) {
+      const videoUri = videos[0]?.video?.uri;
+      if (videoUri) {
+        const videoResponse = await fetch(videoUri);
         const videoBuffer = await videoResponse.arrayBuffer();
         const videoBase64 = Buffer.from(videoBuffer).toString("base64");
 

@@ -57,21 +57,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Serialize the full operation object for polling
-    const serialized = JSON.parse(JSON.stringify(operation));
-
-    if (!serialized.name) {
-      console.error("Veo operation missing name:", JSON.stringify(serialized, null, 2));
+    if (!operation.name) {
+      console.error("Veo operation missing name:", JSON.stringify(operation, null, 2));
       return NextResponse.json(
         { error: "비디오 생성 작업 이름을 받지 못했습니다." },
         { status: 500 }
       );
     }
 
-    // Return full operation for polling
     return NextResponse.json({
-      operation: serialized,
-      message: "비디오 생성이 시작되었습니다. 상태를 확인해주세요.",
+      operationName: operation.name,
+      message: "비디오 생성이 시작되었습니다.",
     });
   } catch (error) {
     console.error("Video generation error:", error);
