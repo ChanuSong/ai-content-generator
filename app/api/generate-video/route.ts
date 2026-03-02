@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     // Start video generation (returns an operation for polling)
     const operation = await ai.models.generateVideos({
-      model: "veo-2-generate-001",
+      model: "veo-3.1-generate-preview",
       prompt,
       image,
       config: {
