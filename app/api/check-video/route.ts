@@ -37,11 +37,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Operation complete - extract video
-    const videos = operation.response?.generatedVideos;
-    if (videos?.length > 0) {
-      const videoUri = videos[0]?.video?.uri;
+    // REST API path: response.generateVideoResponse.generatedSamples[].video.uri
+    const generateVideoResponse = operation.response?.generateVideoResponse;
+    const samples = generateVideoResponse?.generatedSamples;
+
+    if (samples?.length > 0) {
+      const videoUri = samples[0]?.video?.uri;
+
       if (videoUri) {
-        const videoResponse = await fetch(videoUri);
+        // Video URI requires API key header for download
+        const videoResponse = await fetch(videoUri, {
+          headers: { "x-goog-api-key": apiKey },
+        });
         const videoBuffer = await videoResponse.arrayBuffer();
         const videoBase64 = Buffer.from(videoBuffer).toString("base64");
 
@@ -53,9 +60,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Return debug info if extraction fails
+    console.error("Veo response structure:", JSON.stringify(operation, null, 2));
     return NextResponse.json({
       done: true,
-      error: "비디오 생성 결과를 가져올 수 없습니다.",
+      error: `비디오 결과 추출 실패. 응답 구조: ${JSON.stringify(Object.keys(operation.response || {}))}`,
     });
   } catch (error) {
     console.error("Check video error:", error);
