@@ -5,10 +5,10 @@ export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
-    const { operationName } = await req.json();
+    const { operation: operationObj } = await req.json();
 
-    if (!operationName) {
-      return NextResponse.json({ error: "operationName이 필요합니다." }, { status: 400 });
+    if (!operationObj?.name) {
+      return NextResponse.json({ error: "Operation 객체가 필요합니다." }, { status: 400 });
     }
 
     const apiKey = process.env.GOOGLE_API_KEY;
@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const operation = await ai.operations.getVideosOperation({ operation: operationName });
+    // Pass the full operation object (not just the name string)
+    const operation = await ai.operations.getVideosOperation({ operation: operationObj });
 
     if (!operation.done) {
       return NextResponse.json({
