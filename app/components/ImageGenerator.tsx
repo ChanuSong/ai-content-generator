@@ -1,27 +1,51 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 
 const ASPECT_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"];
 const IMAGE_SIZES = ["1K", "2K", "4K"];
+const COUNT_OPTIONS = [1, 2, 3, 4];
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("9:16");
   const [imageSize, setImageSize] = useState("2K");
+  const [count, setCount] = useState(1);
   const [images, setImages] = useState<string[]>([]);
   const [refImages, setRefImages] = useState<File[]>([]);
   const [refPreviews, setRefPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+  const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setRefImages((prev) => [...prev, ...files]);
-    const previews = files.map((f) => URL.createObjectURL(f));
+  const addFiles = useCallback((files: File[]) => {
+    const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) return;
+    setRefImages((prev) => [...prev, ...imageFiles]);
+    const previews = imageFiles.map((f) => URL.createObjectURL(f));
     setRefPreviews((prev) => [...prev, ...previews]);
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    addFiles(Array.from(e.target.files || []));
   };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    addFiles(Array.from(e.dataTransfer.files));
+  }, [addFiles]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+  }, []);
 
   const removeRefImage = (idx: number) => {
     setRefImages((prev) => prev.filter((_, i) => i !== idx));
@@ -31,33 +55,51 @@ export default function ImageGenerator() {
     });
   };
 
+  const generateOne = async (): Promise<string[]> => {
+    const formData = new FormData();
+    formData.append("prompt", prompt);
+    formData.append("aspectRatio", aspectRatio);
+    formData.append("imageSize", imageSize);
+    refImages.forEach((f) => formData.append("images", f));
+
+    const res = await fetch("/api/generate-image", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data.images || [];
+  };
+
   const generate = async () => {
     if (!prompt.trim()) {
       setStatus("프롬프트를 입력해주세요.");
       return;
     }
     setLoading(true);
-    setStatus("이미지 생성 중...");
+    setStatus(`이미지 ${count}장 병렬 생성 중...`);
     setImages([]);
 
     try {
-      const formData = new FormData();
-      formData.append("prompt", prompt);
-      formData.append("aspectRatio", aspectRatio);
-      formData.append("imageSize", imageSize);
-      refImages.forEach((f) => formData.append("images", f));
+      const promises = Array.from({ length: count }, () => generateOne());
+      const results = await Promise.allSettled(promises);
 
-      const res = await fetch("/api/generate-image", {
-        method: "POST",
-        body: formData,
-      });
+      const allImages: string[] = [];
+      let errorCount = 0;
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          allImages.push(...result.value);
+        } else {
+          errorCount++;
+        }
+      }
 
-      const data = await res.json();
-      if (data.error) {
-        setStatus(`오류: ${data.error}`);
+      setImages(allImages);
+      if (allImages.length > 0) {
+        setStatus(`생성 완료! ${allImages.length}장${errorCount > 0 ? ` (${errorCount}건 실패)` : ""}`);
       } else {
-        setImages(data.images || []);
-        setStatus(`생성 완료! ${data.images?.length || 0}장`);
+        setStatus("모든 생성 요청이 실패했습니다.");
       }
     } catch (err) {
       setStatus(`오류: ${err instanceof Error ? err.message : String(err)}`);
@@ -74,10 +116,19 @@ export default function ImageGenerator() {
             참조 이미지 (선택)
           </label>
           <div
-            className="border border-dashed border-white/10 rounded-xl p-4 text-center cursor-pointer hover:border-violet-500/50 hover:bg-white/[0.02] transition-all"
+            className={`border border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+              dragging
+                ? "border-violet-500 bg-violet-500/10"
+                : "border-white/10 hover:border-violet-500/50 hover:bg-white/[0.02]"
+            }`}
             onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
           >
-            <p className="text-slate-400">클릭하여 이미지 업로드</p>
+            <p className="text-slate-400">
+              {dragging ? "여기에 놓으세요" : "클릭 또는 드래그하여 이미지 업로드"}
+            </p>
             <input
               ref={fileInputRef}
               type="file"
@@ -121,7 +172,7 @@ export default function ImageGenerator() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">
               비율
@@ -154,6 +205,22 @@ export default function ImageGenerator() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              생성 수
+            </label>
+            <select
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
+            >
+              {COUNT_OPTIONS.map((n) => (
+                <option key={n} value={n} className="bg-slate-900">
+                  {n}장
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <button
@@ -161,7 +228,7 @@ export default function ImageGenerator() {
           disabled={loading}
           className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all"
         >
-          {loading ? "생성 중..." : "이미지 생성"}
+          {loading ? "생성 중..." : `이미지 ${count}장 생성`}
         </button>
       </div>
 
