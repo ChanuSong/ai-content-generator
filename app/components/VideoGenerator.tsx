@@ -85,6 +85,11 @@ export default function VideoGenerator() {
       return;
     }
 
+    if (!data.operationName) {
+      setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: "작업 이름을 받지 못했습니다." } : v));
+      return;
+    }
+
     try {
       const videoUrl = await pollOperation(data.operationName);
       setVideos((prev) => prev.map((v, i) => i === index ? { url: videoUrl, status: "done" } : v));

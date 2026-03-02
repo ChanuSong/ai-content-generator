@@ -57,9 +57,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log("Veo operation response:", JSON.stringify(operation, null, 2));
+
+    const opName = operation.name;
+    if (!opName) {
+      return NextResponse.json(
+        { error: "비디오 생성 작업 이름을 받지 못했습니다. API 응답을 확인해주세요." },
+        { status: 500 }
+      );
+    }
+
     // Return operation name for polling
     return NextResponse.json({
-      operationName: operation.name,
+      operationName: opName,
       message: "비디오 생성이 시작되었습니다. 상태를 확인해주세요.",
     });
   } catch (error) {

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const operation = await ai.operations.get({ operation: operationName });
+    const operation = await ai.operations.getVideosOperation({ operation: operationName });
 
     if (!operation.done) {
       return NextResponse.json({
@@ -28,15 +28,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Operation complete - extract video
-    // @ts-expect-error - response shape varies
     const videos = operation.response?.generatedVideos;
-    if (videos?.length > 0) {
-      const video = videos[0];
-      // Download video
-      const videoUri = video.video?.uri;
-      if (videoUri) {
-        // Fetch the video content
-        const videoResponse = await fetch(videoUri);
+    if (videos && videos.length > 0) {
+      const video = videos[0].video;
+      if (video?.uri) {
+        const videoResponse = await fetch(video.uri);
         const videoBuffer = await videoResponse.arrayBuffer();
         const videoBase64 = Buffer.from(videoBuffer).toString("base64");
 
