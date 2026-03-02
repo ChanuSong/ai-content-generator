@@ -12,8 +12,9 @@ const TABS = [
   { id: "image", label: "이미지 생성", icon: "🎨", desc: "Gemini Pro" },
   { id: "tts", label: "음성 생성", icon: "🗣️", desc: "Gemini TTS" },
   { id: "video", label: "비디오 생성", icon: "🎬", desc: "Veo 3.1" },
-  { id: "kling", label: "Kling 비디오", icon: "🎥", desc: "Kling AI" },
-  { id: "motion", label: "모션 컨트롤", icon: "🎭", desc: "Kling Motion" },
+  // 의도적으로 UI에서 숨김 — API 라우트와 컴포넌트는 유지
+  // { id: "kling", label: "Kling 비디오", icon: "🎥", desc: "Kling AI" },
+  // { id: "motion", label: "모션 컨트롤", icon: "🎭", desc: "Kling Motion" },
   { id: "idea", label: "아이디어챗", icon: "💡", desc: "Gemini 3 Flash" },
 ];
 
@@ -53,13 +54,14 @@ export default function Home() {
         {activeTab === "image" && <ImageGenerator />}
         {activeTab === "tts" && <TTSGenerator />}
         {activeTab === "video" && <VideoGenerator />}
-        {activeTab === "kling" && <KlingVideoGenerator />}
-        {activeTab === "motion" && <MotionControl />}
+        {/* 의도적으로 UI에서 숨김 — 컴포넌트는 유지 */}
+        {/* {activeTab === "kling" && <KlingVideoGenerator />} */}
+        {/* {activeTab === "motion" && <MotionControl />} */}
         {activeTab === "idea" && <IdeaChat />}
       </div>
 
       <footer className="text-center mt-8 text-xs text-gray-600">
-        Powered by Gemini Pro, Veo 3.1, Kling AI, Gemini 3 Flash
+        Powered by Gemini Pro, Veo 3.1, Gemini 3 Flash
       </footer>
     </main>
   );
