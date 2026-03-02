@@ -89,15 +89,15 @@ export default function VideoGenerator() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">시작 프레임 (필수)</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">시작 프레임 (필수)</label>
           <div
-            className="border-2 border-dashed border-gray-700 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors"
+            className="border border-dashed border-white/10 rounded-xl p-4 text-center cursor-pointer hover:border-violet-500/50 hover:bg-white/[0.02] transition-all"
             onClick={() => fileRef.current?.click()}
           >
             {startPreview ? (
               <img src={startPreview} alt="start" className="max-h-48 mx-auto rounded" />
             ) : (
-              <p className="text-gray-400">클릭하여 이미지 업로드</p>
+              <p className="text-slate-400">클릭하여 이미지 업로드</p>
             )}
             <input
               ref={fileRef}
@@ -116,59 +116,59 @@ export default function VideoGenerator() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">프롬프트</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">프롬프트</label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: 사람이 천천히 손을 흔든다"
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-gray-100 placeholder-gray-500"
+            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
             rows={3}
           />
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">비율</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">비율</label>
             <select
               value={aspectRatio}
               onChange={(e) => setAspectRatio(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100"
+              className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
             >
-              <option value="16:9">16:9</option>
-              <option value="9:16">9:16</option>
+              <option value="16:9" className="bg-slate-900">16:9</option>
+              <option value="9:16" className="bg-slate-900">9:16</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">길이 (초)</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">길이 (초)</label>
             <select
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100"
+              className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
             >
-              <option value={4}>4초</option>
-              <option value={6}>6초</option>
-              <option value={8}>8초</option>
+              <option value={4} className="bg-slate-900">4초</option>
+              <option value={6} className="bg-slate-900">6초</option>
+              <option value={8} className="bg-slate-900">8초</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">화질</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">화질</label>
             <select
               value={quality}
               onChange={(e) => setQuality(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100"
+              className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
             >
-              <option value="720p">720p</option>
-              <option value="1080p">1080p</option>
-              <option value="4K">4K</option>
+              <option value="720p" className="bg-slate-900">720p</option>
+              <option value="1080p" className="bg-slate-900">1080p</option>
+              <option value="4K" className="bg-slate-900">4K</option>
             </select>
           </div>
         </div>
-        <p className="text-xs text-gray-500">1080p, 4K는 8초 길이만 지원</p>
+        <p className="text-xs text-slate-500">1080p, 4K는 8초 길이만 지원</p>
 
         <button
           onClick={generate}
           disabled={loading}
-          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white font-medium py-3 rounded-lg"
+          className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all"
         >
           {loading ? "생성 중..." : "비디오 생성"}
         </button>
@@ -181,14 +181,14 @@ export default function VideoGenerator() {
             <a
               href={videoUrl}
               download="generated_video.mp4"
-              className="block text-center text-sm text-blue-400 hover:text-blue-300 mt-2"
+              className="block text-center text-sm text-violet-400 hover:text-violet-300 mt-2 transition-colors"
             >
               다운로드
             </a>
           </div>
         )}
         {status && (
-          <div className="bg-gray-800 rounded-lg p-3 text-sm text-gray-300 whitespace-pre-wrap">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-slate-300 whitespace-pre-wrap">
             {status}
           </div>
         )}

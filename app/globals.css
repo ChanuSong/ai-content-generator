@@ -1,1 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+  }
+
+  ::selection {
+    background-color: rgba(139, 92, 246, 0.3);
+    color: #e2e8f0;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.35);
+  }
+}
+
+@layer utilities {
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.15), 0 0 30px rgba(99, 102, 241, 0.08);
+    }
+    50% {
+      box-shadow: 0 0 25px rgba(139, 92, 246, 0.25), 0 0 50px rgba(99, 102, 241, 0.15);
+    }
+  }
+
+  .animate-glow {
+    animation: glow 3s ease-in-out infinite;
+  }
+}

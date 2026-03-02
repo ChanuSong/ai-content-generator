@@ -124,13 +124,13 @@ export default function TTSGenerator() {
       <div className="flex gap-2">
         <button
           onClick={() => setTab("single")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "single" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${tab === "single" ? "bg-gradient-to-r from-violet-600/90 to-indigo-600/90 text-white shadow-lg shadow-violet-500/20" : "bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10"}`}
         >
           단일 화자
         </button>
         <button
           onClick={() => setTab("multi")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "multi" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${tab === "multi" ? "bg-gradient-to-r from-violet-600/90 to-indigo-600/90 text-white shadow-lg shadow-violet-500/20" : "bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10"}`}
         >
           다중 화자
         </button>
@@ -141,38 +141,38 @@ export default function TTSGenerator() {
           {tab === "single" ? (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">텍스트</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">텍스트</label>
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder="변환할 텍스트를 입력하세요..."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-gray-100 placeholder-gray-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
                   rows={5}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">목소리 (30종)</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">목소리 (30종)</label>
                 <select
                   value={voice}
                   onChange={(e) => setVoice(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
                 >
-                  {VOICES.map((v) => (<option key={v} value={v}>{v}</option>))}
+                  {VOICES.map((v) => (<option key={v} value={v} className="bg-slate-900">{v}</option>))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">스타일 프롬프트 (선택)</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">스타일 프롬프트 (선택)</label>
                 <input
                   value={stylePrompt}
                   onChange={(e) => setStylePrompt(e.target.value)}
                   placeholder="예: Spooky whisper, Excited and fast"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100 placeholder-gray-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 placeholder-slate-500 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
                 />
               </div>
               <button
                 onClick={generateSingle}
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-medium py-3 rounded-lg"
+                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all"
               >
                 {loading ? "생성 중..." : "음성 생성"}
               </button>
@@ -180,36 +180,36 @@ export default function TTSGenerator() {
           ) : (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">대본</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">대본</label>
                 <textarea
                   value={script}
                   onChange={(e) => setScript(e.target.value)}
                   placeholder={"Joe: 안녕하세요.\nJane: 반갑습니다."}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-gray-100 placeholder-gray-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
                   rows={8}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">화자 설정</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">화자 설정</label>
                 {speakers.map((s, i) => (
                   <div key={i} className="flex gap-2 mb-2">
                     <input
                       value={s.name}
                       onChange={(e) => updateSpeaker(i, "name", e.target.value)}
                       placeholder="화자 이름"
-                      className="flex-1 bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
                     />
                     <select
                       value={s.voice}
                       onChange={(e) => updateSpeaker(i, "voice", e.target.value)}
-                      className="flex-1 bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
                     >
-                      {VOICES.map((v) => (<option key={v} value={v}>{v}</option>))}
+                      {VOICES.map((v) => (<option key={v} value={v} className="bg-slate-900">{v}</option>))}
                     </select>
                     {speakers.length > 1 && (
                       <button
                         onClick={() => setSpeakers((prev) => prev.filter((_, j) => j !== i))}
-                        className="px-2 text-red-400 hover:text-red-300"
+                        className="px-2 text-red-400 hover:text-red-300 transition-colors"
                       >
                         ×
                       </button>
@@ -218,24 +218,24 @@ export default function TTSGenerator() {
                 ))}
                 <button
                   onClick={() => setSpeakers((prev) => [...prev, { name: "", voice: "Kore -- Firm" }])}
-                  className="text-sm text-blue-400 hover:text-blue-300"
+                  className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
                 >
                   + 화자 추가
                 </button>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">스타일 (선택)</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">스타일 (선택)</label>
                 <input
                   value={multiStyle}
                   onChange={(e) => setMultiStyle(e.target.value)}
                   placeholder="예: Speaker1 sounds tired, Speaker2 sounds excited."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100 placeholder-gray-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 placeholder-slate-500 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
                 />
               </div>
               <button
                 onClick={generateMulti}
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-medium py-3 rounded-lg"
+                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all"
               >
                 {loading ? "생성 중..." : "다중 화자 음성 생성"}
               </button>
@@ -250,14 +250,14 @@ export default function TTSGenerator() {
               <a
                 href={audioUrl}
                 download="tts_output.wav"
-                className="block text-center text-sm text-blue-400 hover:text-blue-300 mt-2"
+                className="block text-center text-sm text-violet-400 hover:text-violet-300 mt-2 transition-colors"
               >
                 WAV 다운로드
               </a>
             </div>
           )}
           {status && (
-            <div className="bg-gray-800 rounded-lg p-3 text-sm text-gray-300">
+            <div className="bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-slate-300">
               {status}
             </div>
           )}

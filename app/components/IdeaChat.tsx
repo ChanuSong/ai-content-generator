@@ -119,14 +119,14 @@ export default function IdeaChat() {
           <h2 className="text-lg font-semibold text-white">아이디어챗</h2>
           <button
             onClick={() => setShowSystemPrompt(!showSystemPrompt)}
-            className="text-xs px-2 py-1 rounded bg-gray-800 text-gray-400 hover:text-gray-200 transition-colors"
+            className="text-xs px-2 py-1 rounded-full bg-white/5 border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-all"
           >
             {showSystemPrompt ? "시스템 프롬프트 숨기기" : "시스템 프롬프트"}
           </button>
         </div>
         <button
           onClick={handleReset}
-          className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-gray-700 transition-colors"
+          className="text-xs px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-red-400 hover:bg-white/10 transition-all"
         >
           대화 초기화
         </button>
@@ -138,7 +138,7 @@ export default function IdeaChat() {
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           placeholder="시스템 프롬프트를 커스터마이징하세요 (비워두면 기본값 사용)"
-          className="w-full mb-4 p-3 rounded-lg bg-gray-800 border border-gray-700 text-gray-200 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full mb-4 p-3 rounded-lg bg-white/5 border border-white/10 text-slate-200 text-sm resize-none focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
           rows={3}
         />
       )}
@@ -146,7 +146,7 @@ export default function IdeaChat() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">
         {messages.length === 0 && (
-          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+          <div className="flex items-center justify-center h-full text-slate-500 text-sm">
             콘텐츠 시나리오 아이디어를 이야기해보세요!
           </div>
         )}
@@ -158,13 +158,13 @@ export default function IdeaChat() {
             <div
               className={`max-w-[80%] rounded-xl px-4 py-3 text-sm whitespace-pre-wrap ${
                 msg.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-200"
+                  ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
+                  : "backdrop-blur-xl bg-white/5 border border-white/10 text-slate-200"
               }`}
             >
               {msg.content}
               {msg.role === "assistant" && !msg.content && isLoading && (
-                <span className="inline-block w-2 h-4 bg-gray-400 animate-pulse" />
+                <span className="inline-block w-2 h-4 bg-slate-400 animate-pulse" />
               )}
             </div>
           </div>
@@ -180,14 +180,14 @@ export default function IdeaChat() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="메시지를 입력하세요... (Shift+Enter: 줄바꿈)"
-          className="flex-1 p-3 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="flex-1 p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm resize-none focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
           rows={2}
           disabled={isLoading}
         />
         <button
           onClick={handleSubmit}
           disabled={isLoading || !input.trim()}
-          className="px-5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors self-end h-[42px]"
+          className="px-5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-medium hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-40 disabled:cursor-not-allowed transition-all self-end h-[42px]"
         >
           {isLoading ? "..." : "전송"}
         </button>

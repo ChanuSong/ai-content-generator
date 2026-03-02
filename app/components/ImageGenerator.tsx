@@ -70,14 +70,14 @@ export default function ImageGenerator() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
             참조 이미지 (선택)
           </label>
           <div
-            className="border-2 border-dashed border-gray-700 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors"
+            className="border border-dashed border-white/10 rounded-xl p-4 text-center cursor-pointer hover:border-violet-500/50 hover:bg-white/[0.02] transition-all"
             onClick={() => fileInputRef.current?.click()}
           >
-            <p className="text-gray-400">클릭하여 이미지 업로드</p>
+            <p className="text-slate-400">클릭하여 이미지 업로드</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -109,46 +109,46 @@ export default function ImageGenerator() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-slate-300 mb-1">
             프롬프트
           </label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: 아이를 일어서서 춤출 준비 자세를 취하고 있는 모습으로 그려줘."
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-slate-100 placeholder-slate-500 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
             rows={3}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-slate-300 mb-1">
               비율
             </label>
             <select
               value={aspectRatio}
               onChange={(e) => setAspectRatio(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100"
+              className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
             >
               {ASPECT_RATIOS.map((r) => (
-                <option key={r} value={r}>
+                <option key={r} value={r} className="bg-slate-900">
                   {r}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-slate-300 mb-1">
               해상도
             </label>
             <select
               value={imageSize}
               onChange={(e) => setImageSize(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-gray-100"
+              className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-slate-100 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all"
             >
               {IMAGE_SIZES.map((s) => (
-                <option key={s} value={s}>
+                <option key={s} value={s} className="bg-slate-900">
                   {s}
                 </option>
               ))}
@@ -159,7 +159,7 @@ export default function ImageGenerator() {
         <button
           onClick={generate}
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium py-3 rounded-lg transition-colors"
+          className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all"
         >
           {loading ? "생성 중..." : "이미지 생성"}
         </button>
@@ -178,7 +178,7 @@ export default function ImageGenerator() {
                 <a
                   href={src}
                   download={`generated_${i}.png`}
-                  className="block text-center text-sm text-blue-400 hover:text-blue-300 mt-1"
+                  className="block text-center text-sm text-violet-400 hover:text-violet-300 mt-1 transition-colors"
                 >
                   다운로드
                 </a>
@@ -187,7 +187,7 @@ export default function ImageGenerator() {
           </div>
         )}
         {status && (
-          <div className="bg-gray-800 rounded-lg p-3 text-sm text-gray-300">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-slate-300">
             {status}
           </div>
         )}

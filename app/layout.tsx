@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className="bg-gray-950 text-gray-100 min-h-screen">
+      <body className="bg-slate-950 text-slate-100 min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-indigo-950/30">
         {children}
       </body>
     </html>
