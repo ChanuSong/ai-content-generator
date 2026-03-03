@@ -138,13 +138,10 @@ export default function Home() {
       </nav>
 
       <div className="backdrop-blur-xl bg-white/5 rounded-2xl border border-white/10 p-6 shadow-2xl">
-        {activeTab === "image" && <ImageGenerator />}
-        {activeTab === "tts" && <TTSGenerator />}
-        {activeTab === "video" && <VideoGenerator />}
-        {/* 의도적으로 UI에서 숨김 — 컴포넌트는 유지 */}
-        {/* {activeTab === "kling" && <KlingVideoGenerator />} */}
-        {/* {activeTab === "motion" && <MotionControl />} */}
-        {activeTab === "idea" && <IdeaChat />}
+        <div className={activeTab === "image" ? "" : "hidden"}><ImageGenerator /></div>
+        <div className={activeTab === "tts" ? "" : "hidden"}><TTSGenerator /></div>
+        <div className={activeTab === "video" ? "" : "hidden"}><VideoGenerator /></div>
+        <div className={activeTab === "idea" ? "" : "hidden"}><IdeaChat /></div>
       </div>
 
       <footer className="text-center mt-10">
