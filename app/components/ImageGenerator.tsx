@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 const ASPECT_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"];
 const IMAGE_SIZES = ["1K", "2K", "4K"];
 const COUNT_OPTIONS = [1, 2, 3, 4];
 
-export default function ImageGenerator() {
+interface ImageGeneratorProps {
+  externalRefImages?: File[];
+  onExternalRefConsumed?: () => void;
+}
+
+export default function ImageGenerator({ externalRefImages, onExternalRefConsumed }: ImageGeneratorProps) {
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("9:16");
   const [imageSize, setImageSize] = useState("2K");
@@ -26,6 +31,13 @@ export default function ImageGenerator() {
     const previews = imageFiles.map((f) => URL.createObjectURL(f));
     setRefPreviews((prev) => [...prev, ...previews]);
   }, []);
+
+  useEffect(() => {
+    if (externalRefImages && externalRefImages.length > 0) {
+      addFiles(externalRefImages);
+      onExternalRefConsumed?.();
+    }
+  }, [externalRefImages, addFiles, onExternalRefConsumed]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     addFiles(Array.from(e.target.files || []));

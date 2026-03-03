@@ -9,7 +9,11 @@ interface VideoResult {
   elapsed?: number;
 }
 
-export default function VideoGenerator() {
+interface VideoGeneratorProps {
+  onSendToImage?: (file: File) => void;
+}
+
+export default function VideoGenerator({ onSendToImage }: VideoGeneratorProps) {
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("9:16");
   const [duration, setDuration] = useState(8);
@@ -22,6 +26,7 @@ export default function VideoGenerator() {
   const [status, setStatus] = useState("");
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const setFrameFromFile = useCallback((file: File) => {
     setStartFrame(file);
@@ -97,6 +102,46 @@ export default function VideoGenerator() {
       setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: err instanceof Error ? err.message : String(err) } : v));
     }
   };
+
+  const captureVideoFrame = useCallback((video: HTMLVideoElement): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("Canvas context failed")); return; }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (!blob) { reject(new Error("Blob conversion failed")); return; }
+        resolve(new File([blob], `frame_${Date.now()}.png`, { type: "image/png" }));
+      }, "image/png");
+    });
+  }, []);
+
+  const captureFrame = useCallback(async (index: number) => {
+    const video = videoRefs.current[index];
+    if (!video) return;
+    try {
+      const file = await captureVideoFrame(video);
+      onSendToImage?.(file);
+    } catch { /* ignore */ }
+  }, [onSendToImage, captureVideoFrame]);
+
+  const useLastFrameAsStart = useCallback(async (index: number) => {
+    const video = videoRefs.current[index];
+    if (!video) return;
+    // Seek to the last frame (duration - small epsilon)
+    const targetTime = Math.max(0, video.duration - 0.05);
+    video.currentTime = targetTime;
+    await new Promise<void>((resolve) => {
+      video.addEventListener("seeked", () => resolve(), { once: true });
+    });
+    try {
+      const file = await captureVideoFrame(video);
+      setFrameFromFile(file);
+      setStatus("마지막 프레임을 시작 프레임으로 설정했습니다.");
+    } catch { /* ignore */ }
+  }, [captureVideoFrame, setFrameFromFile]);
 
   const generate = async () => {
     if (!startFrame) { setStatus("시작 프레임을 업로드해주세요."); return; }
@@ -247,14 +292,35 @@ export default function VideoGenerator() {
             )}
             {v.status === "done" && (
               <div>
-                <video controls src={v.url} className="w-full rounded-lg" />
-                <a
-                  href={v.url}
-                  download={`generated_video_${i}.mp4`}
-                  className="block text-center text-sm text-violet-400 hover:text-violet-300 mt-2 transition-colors"
-                >
-                  다운로드
-                </a>
+                <video
+                  controls
+                  src={v.url}
+                  className="w-full rounded-lg"
+                  ref={(el) => { videoRefs.current[i] = el; }}
+                />
+                <div className="flex flex-wrap gap-3 mt-2 justify-center">
+                  <a
+                    href={v.url}
+                    download={`generated_video_${i}.mp4`}
+                    className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    다운로드
+                  </a>
+                  <button
+                    onClick={() => useLastFrameAsStart(i)}
+                    className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    마지막 프레임 → 시작 프레임
+                  </button>
+                  {onSendToImage && (
+                    <button
+                      onClick={() => captureFrame(i)}
+                      className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                    >
+                    현재 프레임 → 이미지 탭
+                    </button>
+                  )}
+                </div>
               </div>
             )}
             {v.status === "error" && (

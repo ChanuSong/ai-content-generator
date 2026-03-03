@@ -10,8 +10,8 @@ import IdeaChat from "./components/IdeaChat";
 
 const TABS = [
   { id: "image", label: "이미지 생성", icon: "🎨", desc: "Gemini Pro" },
-  { id: "tts", label: "음성 생성", icon: "🗣️", desc: "Gemini TTS" },
   { id: "video", label: "비디오 생성", icon: "🎬", desc: "Veo 3.1" },
+  { id: "tts", label: "음성 생성", icon: "🗣️", desc: "Gemini TTS" },
   // 의도적으로 UI에서 숨김 — API 라우트와 컴포넌트는 유지
   // { id: "kling", label: "Kling 비디오", icon: "🎥", desc: "Kling AI" },
   // { id: "motion", label: "모션 컨트롤", icon: "🎭", desc: "Kling Motion" },
@@ -93,6 +93,16 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("image");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [sharedRefImages, setSharedRefImages] = useState<File[]>([]);
+
+  const handleSendToImage = (file: File) => {
+    setSharedRefImages((prev) => [...prev, file]);
+    setActiveTab("image");
+  };
+
+  const handleSharedImagesConsumed = () => {
+    setSharedRefImages([]);
+  };
 
   useEffect(() => {
     const stored = sessionStorage.getItem("authenticated");
@@ -138,9 +148,9 @@ export default function Home() {
       </nav>
 
       <div className="backdrop-blur-xl bg-white/5 rounded-2xl border border-white/10 p-6 shadow-2xl">
-        <div className={activeTab === "image" ? "" : "hidden"}><ImageGenerator /></div>
+        <div className={activeTab === "image" ? "" : "hidden"}><ImageGenerator externalRefImages={sharedRefImages} onExternalRefConsumed={handleSharedImagesConsumed} /></div>
         <div className={activeTab === "tts" ? "" : "hidden"}><TTSGenerator /></div>
-        <div className={activeTab === "video" ? "" : "hidden"}><VideoGenerator /></div>
+        <div className={activeTab === "video" ? "" : "hidden"}><VideoGenerator onSendToImage={handleSendToImage} /></div>
         <div className={activeTab === "idea" ? "" : "hidden"}><IdeaChat /></div>
       </div>
 
