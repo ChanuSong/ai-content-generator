@@ -129,35 +129,36 @@ export default function Home() {
   }
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-8">
-      <header className="text-center mb-10">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+    <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <header className="text-center mb-4 sm:mb-10">
+        <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
           Nano Pro
         </h1>
-        <p className="text-slate-400 mt-2">
+        <p className="text-slate-400 mt-1 sm:mt-2 text-xs sm:text-base">
           AI Image, Video & Audio Generator
         </p>
       </header>
 
-      <nav className="flex flex-wrap gap-2 mb-8 justify-center">
+      <nav className="flex gap-1 sm:gap-2 mb-6 sm:mb-8 justify-center bg-white/[0.03] sm:bg-transparent rounded-xl sm:rounded-none p-1 sm:p-0 border border-white/5 sm:border-0">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+            className={`flex-1 sm:flex-none px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-full text-sm font-medium transition-all ${
               activeTab === tab.id
                 ? "bg-gradient-to-r from-violet-600/90 to-indigo-600/90 text-white shadow-lg shadow-violet-500/20 animate-glow"
                 : "text-slate-400 hover:text-white hover:bg-white/5"
             }`}
           >
-            <span className="mr-1.5">{tab.icon}</span>
-            {tab.label}
-            <span className={`ml-1.5 text-xs ${activeTab === tab.id ? "text-violet-200" : "text-slate-500"}`}>({tab.desc})</span>
+            <span className="sm:mr-1.5 text-base sm:text-sm">{tab.icon}</span>
+            <span className="hidden sm:inline">{tab.label}</span>
+            <span className={`hidden sm:inline ml-1.5 text-xs ${activeTab === tab.id ? "text-violet-200" : "text-slate-500"}`}>({tab.desc})</span>
+            <span className={`block sm:hidden text-[10px] leading-tight mt-0.5 ${activeTab === tab.id ? "text-violet-200" : "text-slate-500"}`}>{tab.label.replace(" 생성", "").replace("아이디어챗", "챗")}</span>
           </button>
         ))}
       </nav>
 
-      <div className="backdrop-blur-xl bg-white/5 rounded-2xl border border-white/10 p-6 shadow-2xl">
+      <div className="backdrop-blur-xl bg-white/5 rounded-2xl border border-white/10 p-3 sm:p-6 shadow-2xl">
         <div className={activeTab === "image" ? "" : "hidden"}><ImageGenerator externalRefImages={sharedRefImages} onExternalRefConsumed={handleSharedImagesConsumed} onSendToVideo={handleSendToVideo} /></div>
         <div className={activeTab === "tts" ? "" : "hidden"}><TTSGenerator /></div>
         <div className={activeTab === "video" ? "" : "hidden"}><VideoGenerator onSendToImage={handleSendToImage} externalStartFrame={sharedStartFrame} onExternalStartFrameConsumed={handleStartFrameConsumed} /></div>
