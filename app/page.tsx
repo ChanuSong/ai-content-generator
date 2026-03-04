@@ -94,6 +94,7 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [sharedRefImages, setSharedRefImages] = useState<File[]>([]);
+  const [sharedStartFrame, setSharedStartFrame] = useState<File | null>(null);
 
   const handleSendToImage = (file: File) => {
     setSharedRefImages((prev) => [...prev, file]);
@@ -102,6 +103,15 @@ export default function Home() {
 
   const handleSharedImagesConsumed = () => {
     setSharedRefImages([]);
+  };
+
+  const handleSendToVideo = (file: File) => {
+    setSharedStartFrame(file);
+    setActiveTab("video");
+  };
+
+  const handleStartFrameConsumed = () => {
+    setSharedStartFrame(null);
   };
 
   useEffect(() => {
@@ -148,9 +158,9 @@ export default function Home() {
       </nav>
 
       <div className="backdrop-blur-xl bg-white/5 rounded-2xl border border-white/10 p-6 shadow-2xl">
-        <div className={activeTab === "image" ? "" : "hidden"}><ImageGenerator externalRefImages={sharedRefImages} onExternalRefConsumed={handleSharedImagesConsumed} /></div>
+        <div className={activeTab === "image" ? "" : "hidden"}><ImageGenerator externalRefImages={sharedRefImages} onExternalRefConsumed={handleSharedImagesConsumed} onSendToVideo={handleSendToVideo} /></div>
         <div className={activeTab === "tts" ? "" : "hidden"}><TTSGenerator /></div>
-        <div className={activeTab === "video" ? "" : "hidden"}><VideoGenerator onSendToImage={handleSendToImage} /></div>
+        <div className={activeTab === "video" ? "" : "hidden"}><VideoGenerator onSendToImage={handleSendToImage} externalStartFrame={sharedStartFrame} onExternalStartFrameConsumed={handleStartFrameConsumed} /></div>
         <div className={activeTab === "idea" ? "" : "hidden"}><IdeaChat /></div>
       </div>
 

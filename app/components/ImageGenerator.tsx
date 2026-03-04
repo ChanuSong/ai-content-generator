@@ -9,9 +9,10 @@ const COUNT_OPTIONS = [1, 2, 3, 4];
 interface ImageGeneratorProps {
   externalRefImages?: File[];
   onExternalRefConsumed?: () => void;
+  onSendToVideo?: (file: File) => void;
 }
 
-export default function ImageGenerator({ externalRefImages, onExternalRefConsumed }: ImageGeneratorProps) {
+export default function ImageGenerator({ externalRefImages, onExternalRefConsumed, onSendToVideo }: ImageGeneratorProps) {
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("9:16");
   const [imageSize, setImageSize] = useState("2K");
@@ -254,13 +255,28 @@ export default function ImageGenerator({ externalRefImages, onExternalRefConsume
                   alt={`generated-${i}`}
                   className="w-full rounded-lg"
                 />
-                <a
-                  href={src}
-                  download={`generated_${i}.png`}
-                  className="block text-center text-sm text-violet-400 hover:text-violet-300 mt-1 transition-colors"
-                >
-                  다운로드
-                </a>
+                <div className="flex gap-3 mt-1 justify-center">
+                  <a
+                    href={src}
+                    download={`generated_${i}.png`}
+                    className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    다운로드
+                  </a>
+                  {onSendToVideo && (
+                    <button
+                      onClick={async () => {
+                        const res = await fetch(src);
+                        const blob = await res.blob();
+                        const file = new File([blob], `generated_${i}.png`, { type: "image/png" });
+                        onSendToVideo(file);
+                      }}
+                      className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                    >
+                      비디오 시작 프레임으로 사용
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

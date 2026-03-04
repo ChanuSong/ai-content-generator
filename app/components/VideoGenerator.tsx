@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 interface VideoResult {
   url: string;
@@ -11,9 +11,11 @@ interface VideoResult {
 
 interface VideoGeneratorProps {
   onSendToImage?: (file: File) => void;
+  externalStartFrame?: File | null;
+  onExternalStartFrameConsumed?: () => void;
 }
 
-export default function VideoGenerator({ onSendToImage }: VideoGeneratorProps) {
+export default function VideoGenerator({ onSendToImage, externalStartFrame, onExternalStartFrameConsumed }: VideoGeneratorProps) {
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("9:16");
   const [duration, setDuration] = useState(8);
@@ -21,17 +23,48 @@ export default function VideoGenerator({ onSendToImage }: VideoGeneratorProps) {
   const [count, setCount] = useState(1);
   const [startFrame, setStartFrame] = useState<File | null>(null);
   const [startPreview, setStartPreview] = useState<string | null>(null);
+  const [endFrame, setEndFrame] = useState<File | null>(null);
+  const [endPreview, setEndPreview] = useState<string | null>(null);
   const [videos, setVideos] = useState<VideoResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [endDragging, setEndDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const endFileRef = useRef<HTMLInputElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const setFrameFromFile = useCallback((file: File) => {
     setStartFrame(file);
     setStartPreview(URL.createObjectURL(file));
   }, []);
+
+  const setEndFrameFromFile = useCallback((file: File) => {
+    setEndFrame(file);
+    setEndPreview(URL.createObjectURL(file));
+  }, []);
+
+  const removeEndFrame = useCallback(() => {
+    setEndFrame(null);
+    if (endPreview) URL.revokeObjectURL(endPreview);
+    setEndPreview(null);
+  }, [endPreview]);
+
+  // Accept external start frame from ImageGenerator
+  useEffect(() => {
+    if (externalStartFrame) {
+      setFrameFromFile(externalStartFrame);
+      onExternalStartFrameConsumed?.();
+    }
+  }, [externalStartFrame, setFrameFromFile, onExternalStartFrameConsumed]);
+
+  // Auto-enforce constraints when end frame is set
+  useEffect(() => {
+    if (endFrame) {
+      setDuration(8);
+      setQuality("720p");
+    }
+  }, [endFrame]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -48,6 +81,23 @@ export default function VideoGenerator({ onSendToImage }: VideoGeneratorProps) {
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
+  }, []);
+
+  const handleEndDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setEndDragging(false);
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith("image/"));
+    if (file) setEndFrameFromFile(file);
+  }, [setEndFrameFromFile]);
+
+  const handleEndDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setEndDragging(true);
+  }, []);
+
+  const handleEndDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setEndDragging(false);
   }, []);
 
   const pollOperation = useCallback(async (operationName: string): Promise<string> => {
@@ -78,6 +128,9 @@ export default function VideoGenerator({ onSendToImage }: VideoGeneratorProps) {
     formData.append("duration", duration.toString());
     formData.append("quality", quality);
     formData.append("startFrame", startFrame!);
+    if (endFrame) {
+      formData.append("endFrame", endFrame);
+    }
 
     const res = await fetch("/api/generate-video", {
       method: "POST",
@@ -152,6 +205,11 @@ export default function VideoGenerator({ onSendToImage }: VideoGeneratorProps) {
       return;
     }
 
+    if (endFrame && (quality !== "720p" || duration !== 8)) {
+      setStatus("끝 프레임 사용 시 720p / 8초만 지원됩니다.");
+      return;
+    }
+
     setLoading(true);
     setStatus(`비디오 ${count}개 병렬 생성 중...`);
     setVideos(Array.from({ length: count }, () => ({ url: "", status: "generating" as const })));
@@ -208,6 +266,50 @@ export default function VideoGenerator({ onSendToImage }: VideoGeneratorProps) {
               }}
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">끝 프레임 (선택)</label>
+          <div
+            className={`border border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+              endDragging
+                ? "border-emerald-500 bg-emerald-500/10"
+                : "border-white/10 hover:border-emerald-500/50 hover:bg-white/[0.02]"
+            }`}
+            onClick={() => endFileRef.current?.click()}
+            onDrop={handleEndDrop}
+            onDragOver={handleEndDragOver}
+            onDragLeave={handleEndDragLeave}
+          >
+            {endPreview ? (
+              <div className="relative inline-block">
+                <img src={endPreview} alt="end" className="max-h-48 mx-auto rounded" />
+                <button
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                  onClick={(e) => { e.stopPropagation(); removeEndFrame(); }}
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <p className="text-slate-400">
+                {endDragging ? "여기에 놓으세요" : "클릭 또는 드래그하여 끝 프레임 업로드"}
+              </p>
+            )}
+            <input
+              ref={endFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setEndFrameFromFile(f);
+              }}
+            />
+          </div>
+          {endFrame && (
+            <p className="text-xs text-amber-400 mt-1">끝 프레임 사용 시 720p / 8초로 자동 설정됩니다.</p>
+          )}
         </div>
 
         <div>

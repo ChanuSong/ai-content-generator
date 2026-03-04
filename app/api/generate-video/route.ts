@@ -11,12 +11,21 @@ export async function POST(req: NextRequest) {
     const duration = parseInt(formData.get("duration") as string) || 8;
     const quality = (formData.get("quality") as string) || "720p";
     const startFrameFile = formData.get("startFrame") as File | null;
+    const endFrameFile = formData.get("endFrame") as File | null;
 
     if (!prompt?.trim()) {
       return NextResponse.json({ error: "프롬프트를 입력해주세요." }, { status: 400 });
     }
     if (!startFrameFile) {
       return NextResponse.json({ error: "시작 프레임을 업로드해주세요." }, { status: 400 });
+    }
+
+    // End frame requires 720p and 8 seconds
+    if (endFrameFile && (quality !== "720p" || duration !== 8)) {
+      return NextResponse.json(
+        { error: "끝 프레임 사용 시 720p / 8초만 지원됩니다." },
+        { status: 400 }
+      );
     }
 
     const apiKey = process.env.GOOGLE_API_KEY;
@@ -45,6 +54,17 @@ export async function POST(req: NextRequest) {
 
     const resolution = quality === "4K" ? "4k" : quality;
 
+    // Read end frame if provided
+    let lastFrameImage;
+    if (endFrameFile) {
+      const endFrameBuffer = await endFrameFile.arrayBuffer();
+      const endFrameBase64 = Buffer.from(endFrameBuffer).toString("base64");
+      lastFrameImage = {
+        imageBytes: endFrameBase64,
+        mimeType: endFrameFile.type || "image/png",
+      };
+    }
+
     // Start video generation (returns an operation for polling)
     const operation = await ai.models.generateVideos({
       model: "veo-3.1-generate-preview",
@@ -54,6 +74,7 @@ export async function POST(req: NextRequest) {
         aspectRatio,
         durationSeconds: duration,
         resolution,
+        ...(lastFrameImage && { lastFrame: lastFrameImage }),
       },
     });
 
