@@ -122,33 +122,33 @@ export default function VideoGenerator({ onSendToImage, externalStartFrame, onEx
   }, []);
 
   const generateOne = async (index: number): Promise<void> => {
-    const formData = new FormData();
-    formData.append("prompt", prompt);
-    formData.append("aspectRatio", aspectRatio);
-    formData.append("duration", duration.toString());
-    formData.append("quality", quality);
-    formData.append("startFrame", startFrame!);
-    if (endFrame) {
-      formData.append("endFrame", endFrame);
-    }
-
-    const res = await fetch("/api/generate-video", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-
-    if (data.error) {
-      setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: data.error } : v));
-      return;
-    }
-
-    if (!data.operationName) {
-      setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: "작업 이름을 받지 못했습니다." } : v));
-      return;
-    }
-
     try {
+      const formData = new FormData();
+      formData.append("prompt", prompt);
+      formData.append("aspectRatio", aspectRatio);
+      formData.append("duration", duration.toString());
+      formData.append("quality", quality);
+      formData.append("startFrame", startFrame!);
+      if (endFrame) {
+        formData.append("endFrame", endFrame);
+      }
+
+      const res = await fetch("/api/generate-video", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: data.error } : v));
+        return;
+      }
+
+      if (!data.operationName) {
+        setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: "작업 이름을 받지 못했습니다." } : v));
+        return;
+      }
+
       const videoUrl = await pollOperation(data.operationName);
       setVideos((prev) => prev.map((v, i) => i === index ? { url: videoUrl, status: "done" } : v));
     } catch (err) {
