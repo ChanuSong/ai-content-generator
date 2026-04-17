@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 export default function MotionControl() {
   const [image, setImage] = useState<File | null>(null);
@@ -16,40 +16,74 @@ export default function MotionControl() {
   const [status, setStatus] = useState("");
   const imageRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
+  const workerRef = useRef<Worker | null>(null);
 
-  const pollStatus = useCallback(async (taskId: string) => {
-    const maxAttempts = 240; // 20 min at 5s
-    for (let i = 0; i < maxAttempts; i++) {
-      await new Promise((r) => setTimeout(r, 5000));
-      setStatus(`Motion Control 생성 중... (${(i + 1) * 5}초 경과)`);
+  useEffect(() => {
+    workerRef.current = new Worker("/poll-worker.js");
+    return () => { workerRef.current?.terminate(); };
+  }, []);
 
-      try {
-        const res = await fetch("/api/motion-status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ taskId }),
-        });
-        const data = await res.json();
+  const notify = useCallback((title: string, body: string) => {
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      new Notification(title, { body });
+    }
+  }, []);
 
-        if (data.done) {
-          if (data.videoUrl) {
+  const pollStatus = useCallback((taskId: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const worker = workerRef.current;
+      if (!worker) { reject(new Error("Worker not available")); return; }
+
+      const jobId = `motion-${Date.now()}`;
+
+      const handler = (e: MessageEvent) => {
+        if (e.data.id !== jobId) return;
+
+        if (e.data.type === "progress") {
+          setStatus(`Motion Control 생성 중... (${e.data.attempt * 5}초 경과)`);
+        } else if (e.data.type === "result") {
+          worker.removeEventListener("message", handler);
+          const data = e.data.data;
+          if (data.done && data.videoUrl) {
             setResultUrl(data.videoUrl);
             setStatus(`Motion Control 완료! (${data.duration || "?"}초)`);
+            notify("Motion Control 완료", "비디오 생성이 완료되었습니다.");
           } else {
             setStatus(`오류: ${data.error || "결과 없음"}`);
+            notify("Motion Control 실패", data.error || "결과 없음");
           }
-          return;
+          resolve();
+        } else if (e.data.type === "timeout") {
+          worker.removeEventListener("message", handler);
+          setStatus("시간 초과");
+          notify("Motion Control 실패", "시간 초과");
+          resolve();
+        } else if (e.data.type === "error") {
+          worker.removeEventListener("message", handler);
+          setStatus(`오류: ${e.data.error}`);
+          resolve();
         }
-      } catch (err) {
-        console.error("Poll error:", err);
-      }
-    }
-    setStatus("시간 초과");
-  }, []);
+      };
+
+      worker.addEventListener("message", handler);
+      worker.postMessage({
+        type: "start",
+        id: jobId,
+        url: "/api/motion-status",
+        body: { taskId },
+        interval: 5000,
+        maxAttempts: 240,
+      });
+    });
+  }, [notify]);
 
   const generate = async () => {
     if (!image) { setStatus("참조 이미지를 업로드해주세요."); return; }
     if (!video) { setStatus("참조 비디오를 업로드해주세요."); return; }
+
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
 
     setLoading(true);
     setStatus("Motion Control 요청 중...");

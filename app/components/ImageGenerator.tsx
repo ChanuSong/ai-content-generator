@@ -85,40 +85,48 @@ export default function ImageGenerator({ externalRefImages, onExternalRefConsume
     return data.images || [];
   };
 
+  const notify = useCallback((title: string, body: string) => {
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      new Notification(title, { body });
+    }
+  }, []);
+
   const generate = async () => {
     if (!prompt.trim()) {
       setStatus("프롬프트를 입력해주세요.");
       return;
     }
+
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
     setLoading(true);
-    setStatus(`이미지 ${count}장 병렬 생성 중...`);
     setImages([]);
 
-    try {
-      const promises = Array.from({ length: count }, () => generateOne());
-      const results = await Promise.allSettled(promises);
+    const allImages: string[] = [];
+    let errorCount = 0;
 
-      const allImages: string[] = [];
-      let errorCount = 0;
-      for (const result of results) {
-        if (result.status === "fulfilled") {
-          allImages.push(...result.value);
-        } else {
-          errorCount++;
-        }
+    for (let i = 0; i < count; i++) {
+      setStatus(`이미지 생성 중... (${i + 1}/${count})`);
+      try {
+        const result = await generateOne();
+        allImages.push(...result);
+        setImages([...allImages]);
+      } catch {
+        errorCount++;
       }
-
-      setImages(allImages);
-      if (allImages.length > 0) {
-        setStatus(`생성 완료! ${allImages.length}장${errorCount > 0 ? ` (${errorCount}건 실패)` : ""}`);
-      } else {
-        setStatus("모든 생성 요청이 실패했습니다.");
-      }
-    } catch (err) {
-      setStatus(`오류: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      setLoading(false);
     }
+
+    if (allImages.length > 0) {
+      const msg = `생성 완료! ${allImages.length}장${errorCount > 0 ? ` (${errorCount}건 실패)` : ""}`;
+      setStatus(msg);
+      notify("이미지 생성 완료", msg);
+    } else {
+      setStatus("모든 생성 요청이 실패했습니다.");
+      notify("이미지 생성 실패", "모든 요청이 실패했습니다.");
+    }
+    setLoading(false);
   };
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 export default function KlingVideoGenerator() {
   const [prompt, setPrompt] = useState("");
@@ -14,40 +14,74 @@ export default function KlingVideoGenerator() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const workerRef = useRef<Worker | null>(null);
 
-  const pollStatus = useCallback(async (taskId: string) => {
-    const maxAttempts = 200; // ~16 min
-    for (let i = 0; i < maxAttempts; i++) {
-      await new Promise((r) => setTimeout(r, 5000));
-      setStatus(`비디오 생성 중... (${(i + 1) * 5}초 경과)`);
+  useEffect(() => {
+    workerRef.current = new Worker("/poll-worker.js");
+    return () => { workerRef.current?.terminate(); };
+  }, []);
 
-      try {
-        const res = await fetch("/api/kling-status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ taskId }),
-        });
-        const data = await res.json();
+  const notify = useCallback((title: string, body: string) => {
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      new Notification(title, { body });
+    }
+  }, []);
 
-        if (data.done) {
-          if (data.videoUrl) {
+  const pollStatus = useCallback((taskId: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const worker = workerRef.current;
+      if (!worker) { reject(new Error("Worker not available")); return; }
+
+      const jobId = `kling-${Date.now()}`;
+
+      const handler = (e: MessageEvent) => {
+        if (e.data.id !== jobId) return;
+
+        if (e.data.type === "progress") {
+          setStatus(`비디오 생성 중... (${e.data.attempt * 5}초 경과)`);
+        } else if (e.data.type === "result") {
+          worker.removeEventListener("message", handler);
+          const data = e.data.data;
+          if (data.done && data.videoUrl) {
             setVideoUrl(data.videoUrl);
             setStatus("Kling 비디오 생성 완료!");
+            notify("Kling 비디오 완료", "비디오 생성이 완료되었습니다.");
           } else {
             setStatus(`오류: ${data.error || "결과 없음"}`);
+            notify("Kling 비디오 실패", data.error || "결과 없음");
           }
-          return;
+          resolve();
+        } else if (e.data.type === "timeout") {
+          worker.removeEventListener("message", handler);
+          setStatus("시간 초과");
+          notify("Kling 비디오 실패", "시간 초과");
+          resolve();
+        } else if (e.data.type === "error") {
+          worker.removeEventListener("message", handler);
+          setStatus(`오류: ${e.data.error}`);
+          resolve();
         }
-      } catch (err) {
-        console.error("Poll error:", err);
-      }
-    }
-    setStatus("시간 초과");
-  }, []);
+      };
+
+      worker.addEventListener("message", handler);
+      worker.postMessage({
+        type: "start",
+        id: jobId,
+        url: "/api/kling-status",
+        body: { taskId },
+        interval: 5000,
+        maxAttempts: 200,
+      });
+    });
+  }, [notify]);
 
   const generate = async () => {
     if (!image) { setStatus("이미지를 업로드해주세요."); return; }
     if (!prompt.trim()) { setStatus("프롬프트를 입력해주세요."); return; }
+
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
 
     setLoading(true);
     setStatus("Kling 비디오 생성 요청 중...");

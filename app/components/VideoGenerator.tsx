@@ -100,25 +100,56 @@ export default function VideoGenerator({ onSendToImage, externalStartFrame, onEx
     setEndDragging(false);
   }, []);
 
-  const pollOperation = useCallback(async (operationName: string): Promise<string> => {
-    const maxAttempts = 120;
-    for (let i = 0; i < maxAttempts; i++) {
-      await new Promise((r) => setTimeout(r, 5000));
+  const workerRef = useRef<Worker | null>(null);
 
-      const res = await fetch("/api/check-video", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ operationName }),
-      });
-      const data = await res.json();
+  useEffect(() => {
+    workerRef.current = new Worker("/poll-worker.js");
+    return () => { workerRef.current?.terminate(); };
+  }, []);
 
-      if (data.error) throw new Error(data.error);
-      if (data.done) {
-        if (data.video) return data.video;
-        throw new Error("비디오 생성 실패");
-      }
+  const notify = useCallback((title: string, body: string) => {
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      new Notification(title, { body });
     }
-    throw new Error("시간 초과");
+  }, []);
+
+  const pollOperation = useCallback((operationName: string, index: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const worker = workerRef.current;
+      if (!worker) { reject(new Error("Worker not available")); return; }
+
+      const jobId = `veo-${index}-${Date.now()}`;
+
+      const handler = (e: MessageEvent) => {
+        if (e.data.id !== jobId) return;
+
+        if (e.data.type === "progress") {
+          setVideos((prev) => prev.map((v, i) => i === index ? { ...v, elapsed: e.data.attempt * 5 } : v));
+        } else if (e.data.type === "result") {
+          worker.removeEventListener("message", handler);
+          const data = e.data.data;
+          if (data.error) { reject(new Error(data.error)); return; }
+          if (data.done && data.video) { resolve(data.video); return; }
+          reject(new Error("비디오 생성 실패"));
+        } else if (e.data.type === "timeout") {
+          worker.removeEventListener("message", handler);
+          reject(new Error("시간 초과"));
+        } else if (e.data.type === "error") {
+          worker.removeEventListener("message", handler);
+          reject(new Error(e.data.error));
+        }
+      };
+
+      worker.addEventListener("message", handler);
+      worker.postMessage({
+        type: "start",
+        id: jobId,
+        url: "/api/check-video",
+        body: { operationName },
+        interval: 5000,
+        maxAttempts: 120,
+      });
+    });
   }, []);
 
   const generateOne = async (index: number): Promise<void> => {
@@ -149,8 +180,9 @@ export default function VideoGenerator({ onSendToImage, externalStartFrame, onEx
         return;
       }
 
-      const videoUrl = await pollOperation(data.operationName);
+      const videoUrl = await pollOperation(data.operationName, index);
       setVideos((prev) => prev.map((v, i) => i === index ? { url: videoUrl, status: "done" } : v));
+      notify("비디오 생성 완료", `비디오 ${index + 1} 생성이 완료되었습니다.`);
     } catch (err) {
       setVideos((prev) => prev.map((v, i) => i === index ? { ...v, status: "error", error: err instanceof Error ? err.message : String(err) } : v));
     }
@@ -210,26 +242,25 @@ export default function VideoGenerator({ onSendToImage, externalStartFrame, onEx
       return;
     }
 
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
     setLoading(true);
-    setStatus(`비디오 ${count}개 병렬 생성 중...`);
     setVideos(Array.from({ length: count }, () => ({ url: "", status: "generating" as const })));
 
-    try {
-      await Promise.allSettled(
-        Array.from({ length: count }, (_, i) => generateOne(i))
-      );
-
-      setVideos((prev) => {
-        const done = prev.filter((v) => v.status === "done").length;
-        const failed = prev.filter((v) => v.status === "error").length;
-        setStatus(`완료! ${done}개 성공${failed > 0 ? `, ${failed}개 실패` : ""}`);
-        return prev;
-      });
-    } catch (err) {
-      setStatus(`오류: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      setLoading(false);
+    for (let i = 0; i < count; i++) {
+      setStatus(`비디오 생성 중... (${i + 1}/${count})`);
+      await generateOne(i);
     }
+
+    setVideos((prev) => {
+      const done = prev.filter((v) => v.status === "done").length;
+      const failed = prev.filter((v) => v.status === "error").length;
+      setStatus(`완료! ${done}개 성공${failed > 0 ? `, ${failed}개 실패` : ""}`);
+      return prev;
+    });
+    setLoading(false);
   };
 
   return (

@@ -21,10 +21,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const apiKey = process.env.GOOGLE_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "GOOGLE_API_KEY가 설정되지 않았습니다." }),
+        JSON.stringify({ error: "GEMINI_API_KEY가 설정되지 않았습니다." }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
