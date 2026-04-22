@@ -247,12 +247,12 @@ export default function VideoGenerator({ onSendToImage, externalStartFrame, onEx
     }
 
     setLoading(true);
+    setStatus(`비디오 ${count}개 병렬 생성 중...`);
     setVideos(Array.from({ length: count }, () => ({ url: "", status: "generating" as const })));
 
-    for (let i = 0; i < count; i++) {
-      setStatus(`비디오 생성 중... (${i + 1}/${count})`);
-      await generateOne(i);
-    }
+    await Promise.allSettled(
+      Array.from({ length: count }, (_, i) => generateOne(i))
+    );
 
     setVideos((prev) => {
       const done = prev.filter((v) => v.status === "done").length;

@@ -103,21 +103,23 @@ export default function ImageGenerator({ externalRefImages, onExternalRefConsume
 
     setLoading(true);
     setImages([]);
+    setStatus(`이미지 ${count}장 병렬 생성 중...`);
+
+    const results = await Promise.allSettled(
+      Array.from({ length: count }, () => generateOne())
+    );
 
     const allImages: string[] = [];
     let errorCount = 0;
-
-    for (let i = 0; i < count; i++) {
-      setStatus(`이미지 생성 중... (${i + 1}/${count})`);
-      try {
-        const result = await generateOne();
-        allImages.push(...result);
-        setImages([...allImages]);
-      } catch {
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        allImages.push(...result.value);
+      } else {
         errorCount++;
       }
     }
 
+    setImages(allImages);
     if (allImages.length > 0) {
       const msg = `생성 완료! ${allImages.length}장${errorCount > 0 ? ` (${errorCount}건 실패)` : ""}`;
       setStatus(msg);
