@@ -129,7 +129,7 @@ export default function VideoGenerator({ onSendToImage, externalStartFrame, onEx
           worker.removeEventListener("message", handler);
           const data = e.data.data;
           if (data.error) { reject(new Error(data.error)); return; }
-          if (data.done && data.video) { resolve(data.video); return; }
+          if (data.done && data.videoUrl) { resolve(data.videoUrl); return; }
           reject(new Error("비디오 생성 실패"));
         } else if (e.data.type === "timeout") {
           worker.removeEventListener("message", handler);

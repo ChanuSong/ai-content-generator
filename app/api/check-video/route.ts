@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "GEMINI_API_KEY가 설정되지 않았습니다." }, { status: 500 });
     }
 
-    // Direct REST call to Google API (bypasses SDK class instantiation issues)
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`
     );
@@ -36,11 +35,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Operation complete - extract video
-    // REST API (mldev) path: response.generateVideoResponse.generatedSamples[].video.uri
     const generateVideoResponse = operation.response?.generateVideoResponse;
 
-    // Check for content safety filtering
     if (generateVideoResponse?.raiMediaFilteredCount > 0) {
       return NextResponse.json({
         done: true,
@@ -49,35 +45,19 @@ export async function POST(req: NextRequest) {
     }
 
     const samples = generateVideoResponse?.generatedSamples;
+    const videoUri = samples?.[0]?.video?.uri;
 
-    if (samples?.length > 0) {
-      const videoUri = samples[0]?.video?.uri;
-
-      if (videoUri) {
-        // Video URI requires API key header for download
-        const videoResponse = await fetch(videoUri, {
-          headers: { "x-goog-api-key": apiKey },
-        });
-
-        if (!videoResponse.ok) {
-          return NextResponse.json({
-            done: true,
-            error: `비디오 다운로드 실패: ${videoResponse.status} ${videoResponse.statusText}`,
-          });
-        }
-
-        const videoBuffer = await videoResponse.arrayBuffer();
-        const videoBase64 = Buffer.from(videoBuffer).toString("base64");
-
-        return NextResponse.json({
-          done: true,
-          video: `data:video/mp4;base64,${videoBase64}`,
-          message: "비디오 생성 완료!",
-        });
-      }
+    if (videoUri) {
+      // Return a same-origin streaming proxy URL instead of inlining the
+      // video as base64. Vercel's serverless response payload limit (~4.5MB)
+      // would otherwise reject Veo mp4s, which routinely exceed that size.
+      return NextResponse.json({
+        done: true,
+        videoUrl: `/api/video-stream?op=${encodeURIComponent(operationName)}`,
+        message: "비디오 생성 완료!",
+      });
     }
 
-    // Extraction failed - return detailed debug info
     const debugInfo = {
       responseKeys: Object.keys(operation.response || {}),
       generateVideoResponseKeys: generateVideoResponse ? Object.keys(generateVideoResponse) : null,
