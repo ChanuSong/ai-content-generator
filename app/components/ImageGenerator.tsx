@@ -6,6 +6,38 @@ const ASPECT_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"
 const IMAGE_SIZES = ["1K", "2K", "4K"];
 const COUNT_OPTIONS = [1, 2, 3, 4];
 
+async function svgToPng(file: File): Promise<File> {
+  const svgText = await file.text();
+  const blob = new Blob([svgText], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("SVG 로드 실패"));
+      el.src = url;
+    });
+    const width = img.naturalWidth || 1024;
+    const height = img.naturalHeight || 1024;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas 컨텍스트를 만들 수 없습니다.");
+    ctx.drawImage(img, 0, 0, width, height);
+    const pngBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("PNG 변환 실패"))),
+        "image/png"
+      );
+    });
+    const baseName = file.name.replace(/\.svg$/i, "") || "image";
+    return new File([pngBlob], `${baseName}.png`, { type: "image/png" });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 interface ImageGeneratorProps {
   externalRefImages?: File[];
   onExternalRefConsumed?: () => void;
@@ -25,11 +57,26 @@ export default function ImageGenerator({ externalRefImages, onExternalRefConsume
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const addFiles = useCallback((files: File[]) => {
+  const addFiles = useCallback(async (files: File[]) => {
     const imageFiles = files.filter((f) => f.type.startsWith("image/"));
     if (imageFiles.length === 0) return;
-    setRefImages((prev) => [...prev, ...imageFiles]);
-    const previews = imageFiles.map((f) => URL.createObjectURL(f));
+    const converted = await Promise.all(
+      imageFiles.map(async (f) => {
+        if (f.type === "image/svg+xml" || /\.svg$/i.test(f.name)) {
+          try {
+            return await svgToPng(f);
+          } catch (e) {
+            console.error("SVG conversion failed:", e);
+            return null;
+          }
+        }
+        return f;
+      })
+    );
+    const accepted = converted.filter((f): f is File => f !== null);
+    if (accepted.length === 0) return;
+    setRefImages((prev) => [...prev, ...accepted]);
+    const previews = accepted.map((f) => URL.createObjectURL(f));
     setRefPreviews((prev) => [...prev, ...previews]);
   }, []);
 
