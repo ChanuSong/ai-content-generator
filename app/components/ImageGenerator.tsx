@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { saveFile } from "../lib/download";
 
 const ASPECT_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9"];
 const IMAGE_SIZES = ["1K", "2K", "4K"];
@@ -313,13 +314,13 @@ export default function ImageGenerator({ externalRefImages, onExternalRefConsume
                   className="w-full rounded-lg"
                 />
                 <div className="flex gap-3 mt-1 justify-center">
-                  <a
-                    href={src}
-                    download={`generated_${i}.png`}
+                  <button
+                    type="button"
+                    onClick={() => saveFile(src, `generated_${i}.png`)}
                     className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
                   >
                     다운로드
-                  </a>
+                  </button>
                   {onSendToVideo && (
                     <button
                       onClick={async () => {

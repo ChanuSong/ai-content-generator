@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { saveFile } from "../lib/download";
 
 const VOICES = [
   "Zephyr -- Bright", "Puck -- Upbeat", "Charon -- Informative", "Kore -- Firm",
@@ -247,13 +248,13 @@ export default function TTSGenerator() {
           {audioUrl && (
             <div>
               <audio controls src={audioUrl} className="w-full" />
-              <a
-                href={audioUrl}
-                download="tts_output.wav"
-                className="block text-center text-sm text-violet-400 hover:text-violet-300 mt-2 transition-colors"
+              <button
+                type="button"
+                onClick={() => saveFile(audioUrl, "tts_output.wav")}
+                className="block w-full text-center text-sm text-violet-400 hover:text-violet-300 mt-2 transition-colors"
               >
                 WAV 다운로드
-              </a>
+              </button>
             </div>
           )}
           {status && (

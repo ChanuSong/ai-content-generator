@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { saveFile } from "../lib/download";
 
 interface VideoResult {
   url: string;
@@ -432,13 +433,13 @@ export default function VideoGenerator({ onSendToImage, externalStartFrame, onEx
                   ref={(el) => { videoRefs.current[i] = el; }}
                 />
                 <div className="flex flex-wrap gap-3 mt-2 justify-center">
-                  <a
-                    href={v.url}
-                    download={`generated_video_${i}.mp4`}
+                  <button
+                    type="button"
+                    onClick={() => saveFile(v.url, `generated_video_${i}.mp4`)}
                     className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
                   >
                     다운로드
-                  </a>
+                  </button>
                   <button
                     onClick={() => useLastFrameAsStart(i)}
                     className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
